@@ -1,0 +1,14 @@
+1) Setup venv
+py -3.11 -m venv venv
+
+.\venv\Scripts\activate
+
+pip install -r requirements.txt
+
+
+
+2) Check what is in the venv
+https://docs.python.org/3/tutorial/venv.html
+
+python -m pip freeze > packages.txt
+cat packages.txt
