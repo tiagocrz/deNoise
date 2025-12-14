@@ -14,7 +14,7 @@ from tools.choosing_tavily import scrape_url_realtime
 from tools.choosing_rag import rag_trigger
 from tools.text_to_speech import convert_script_to_audio
 
-from elevenlabs.play import play
+from elevenlabs.play import save
 
 
 class AgentsService:
@@ -154,4 +154,4 @@ class AgentsService:
         # 3. Convert Script to Audio (ElevenLabs Tool)
         audio = convert_script_to_audio(podcast_script)
         
-        play(audio)
+        save(audio, filename="podcast_test.mp3")
