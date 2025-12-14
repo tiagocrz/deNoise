@@ -212,7 +212,7 @@ __marimo__/
 # ----------------------------
 
 # Ignore the Gmail API credentials file
-gmail_scrapping/credentials.json
+database_layer/gmail_scrapping/credentials.json
 
 # Ignore the Gmail access token file (automatically generated after first run)
-gmail_scrapping/token.json
+database_layer/gmail_scrapping/token.json
