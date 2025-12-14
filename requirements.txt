@@ -1,6 +1,13 @@
 pandas==2.3.3
 python-dotenv==1.2.1
 google-genai==1.52.0
-azure-cosmos==4.12.2
+azure-cosmos==4.14.3
 langchain-core==1.1.1
 langchain-azure-ai==1.0.4
+langfuse==3.10.5
+beautifulsoup4==4.14.3
+google-api-python-client==2.187.0
+google-auth-oauthlib==1.2.3
+google-auth==2.41.1
+lxml==6.0.2
+eleven_labs==2.26.1
