@@ -1,3 +1,5 @@
+import os
+from tavily import TavilyClient
 from langfuse import observe
 
 @observe(as_type="tool")
@@ -14,18 +16,15 @@ def scrape_url_realtime(url: str, prompt: str) -> str:
         url: The complete external URL (http:// or https://) to be scraped.
         prompt: The full, unmodified user question/prompt to guide the summarization.
     """
-    print(f"[Tool] Calling Tavily Online to scrape: {url}")
     
-    try:
-        # Implementation using Tavily's API (Mocked for now)
-        # In production: Use self.tavily_client.search(...)
-        
-        response_text = (
-            f"Tavily Summary for {url}\n"
-            f"Tailored to prompt: '{prompt}'\n"
-            f"Content: [Real-time scraped content would appear here...]"
-        )
-        return response_text
+    tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
-    except Exception as e:
-        return f"Error: Could not retrieve content from URL. {str(e)}"
+    result = tavily.search(
+        query=prompt,
+        auto_parameters=True,
+        topic="news",
+        max_results=10,
+        include_answer="advanced",
+        include_domains=url)
+
+    return result

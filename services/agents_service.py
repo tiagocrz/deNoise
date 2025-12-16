@@ -27,6 +27,7 @@ class AgentsService:
         self.gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
         self.model = model
         self.prompts = PromptLoader()
+        self.sessions = {}
 
         # 2. Initialize Service Dependencies
         self.cosmos_db_service = MockCosmosDBService()
@@ -39,24 +40,36 @@ class AgentsService:
     @observe(as_type="agent")
     def generate_chat_answer(self, prompt: str, user_id: str) -> str:
         """
-        Generates a chat response. 
-        Gemini automatically decides whether to use the internal DB tool, 
-        the external scraper, or just chat.
+        Generates a chat response while maintaining the session context.
         """
-        # 1. Define the Toolkit (Actual Python functions)
+        # 1. Initialize History for User if not exists
+        if user_id not in self.sessions:
+            self.sessions[user_id] = []
+        
+        # 2. Define the Toolkit
         agent_tools = [rag_trigger, scrape_url_realtime]
 
-        # 2. System Instructions
+        # 3. Prepare System Instructions (User Profile)
         custom_instructions = self.cosmos_db_service.retrieve_user_instructions(user_id)
         full_system_instruction = self.prompts.format(
             "conversational_agent_system", 
             custom_instructions=custom_instructions
         )
         
-        # 3. Call Gemini (Auto Mode)
+        # 4. Add the NEW User Message to History
+        # We create a structured 'Content' object for the user's prompt
+        user_message = types.Content(
+            role="user",
+            parts=[types.Part(text=prompt)]
+        )
+        self.sessions[user_id].append(user_message)
+
+        # 5. Call Gemini with FULL HISTORY
+        # We pass the entire list of previous messages (self.sessions[user_id])
+        # Gemini will see the whole conversation context.
         response = self.gemini_client.models.generate_content(
             model=self.model,
-            contents=prompt,
+            contents=self.sessions[user_id],  # <--- Pass Full History Here
             config=types.GenerateContentConfig(
                 temperature=0.3,
                 system_instruction=full_system_instruction,
@@ -69,7 +82,31 @@ class AgentsService:
             )
         )
 
-        return response.text
+        # 6. Extract Answer & Update History
+        # The 'response.text' is the final natural language answer (after any tool usage)
+        model_answer_text = response.text
+        
+        # Create a structured 'Content' object for the model's answer
+        model_message = types.Content(
+            role="model",
+            parts=[types.Part(text=model_answer_text)]
+        )
+        self.sessions[user_id].append(model_message)
+
+        return model_answer_text
+    
+
+    def clear_session_memory(self, user_id: str):
+        """
+        Clears the chat history for a specific user.
+        Call this when the user clicks 'Clear Chat' or logs out.s
+        """
+        if user_id in self.sessions:
+            del self.sessions[user_id]
+            print(f"Memory cleared for user: {user_id}")
+        return {"status": "success", "message": "Chat history cleared"}
+    
+
 
     # ========================================================================
     # 2. REPORT GENERATOR (Report Page)
