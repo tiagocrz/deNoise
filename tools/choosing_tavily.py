@@ -9,11 +9,12 @@ def scrape_url_realtime(url: str, prompt: str) -> str:
 
     CRITICAL INSTRUCTION:
     - Use this function ONLY when the user explicitly provides a URL.
-    - Example: "What does this link say: [URL]?"
+    - Example: "Please summarize the key news from this webpage: eco.sapo.pt?"
+    - The URL can be in different formats but must always be passed as the 'url' argument. Key formats: "http", "https", "www", ".com", ".pt", ".org" or similar.
     - Do NOT use this for general knowledge questions.
 
     Args:
-        url: The complete external URL (http:// or https://) to be scraped.
+        url: The complete external URL to be scraped.
         prompt: The full, unmodified user question/prompt to guide the summarization.
     """
     
@@ -25,6 +26,6 @@ def scrape_url_realtime(url: str, prompt: str) -> str:
         topic="news",
         max_results=10,
         include_answer="advanced",
-        include_domains=url)
+        include_domains=[url])
 
-    return result
+    return result['answer']

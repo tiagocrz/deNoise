@@ -9,7 +9,6 @@ from services.cosmos_db_service import CosmosDBService
 from services.MOCK_cosmos_db_service import MockCosmosDBService
 
 # Import the Tools
-# We use these for BOTH the Agentic Chat (Auto) and the Deterministic Generators (Manual)
 from tools.choosing_tavily import scrape_url_realtime
 from tools.choosing_rag import rag_trigger
 from tools.text_to_speech import convert_script_to_audio
@@ -69,7 +68,7 @@ class AgentsService:
         # Gemini will see the whole conversation context.
         response = self.gemini_client.models.generate_content(
             model=self.model,
-            contents=self.sessions[user_id],  # <--- Pass Full History Here
+            contents=self.sessions[user_id],
             config=types.GenerateContentConfig(
                 temperature=0.3,
                 system_instruction=full_system_instruction,
@@ -135,7 +134,7 @@ class AgentsService:
         # 3. Call Gemini (Context injected into prompt)
         full_contents = [
             f"Topic: {topics}",
-            f"\n\n--- MARKET DATA (Source: Internal DB) ---\n{context}"
+            f"\n\n--- NEWS (Source: Internal DB) ---\n{context}"
         ]
 
         response = self.gemini_client.models.generate_content(
