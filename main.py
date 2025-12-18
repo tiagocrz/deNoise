@@ -30,7 +30,7 @@ app.add_middleware(
         "http://localhost:3000",  # React default
         "http://localhost:5173",  # Vite default
         "http://localhost:8080",  # Vue default
-        "https://denoise.lovable.app/"  # Production URL
+        "https://denoise.lovable.app"  # Production URL
     ],
     allow_credentials=True,
     allow_methods=["*"],
