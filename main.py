@@ -73,7 +73,6 @@ class PodcastRequest(BaseModel):
     user_id: str = Field(..., description="User identifier")
 
 class PodcastResponse(BaseModel):
-    script: str = Field(..., description="Generated podcast script")
     audio_url: str = Field(..., description="URL to download audio file")
     timestamp: str = Field(..., description="Podcast generation timestamp")
 
@@ -190,21 +189,16 @@ async def generate_podcast(request: PodcastRequest):
     Returns both the script text and a reference to the audio file.
     """
     try:
-        # Generate podcast (script + audio)
-        script = agents_service.generate_podcast(
+        # UPDATED: Service now returns only the Data URI string
+        audio_data_uri = agents_service.generate_podcast(
             topics=request.topics,
             time_range=request.time_range,
             structure=request.structure,
             user_id=request.user_id
         )
         
-        # In production, you'd save this to cloud storage and return URL
-        audio_filename = f"podcast_{request.user_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.mp3"
-        audio_url = f"/api/podcast/download/{audio_filename}"
-        
         return PodcastResponse(
-            script=script,
-            audio_url=audio_url,
+            audio_url=audio_data_uri,
             timestamp=datetime.utcnow().isoformat()
         )
     
@@ -213,37 +207,8 @@ async def generate_podcast(request: PodcastRequest):
             status_code=500,
             detail=f"Error generating podcast: {str(e)}"
         )
-
-@app.get("/api/podcast/download/{filename}")
-async def download_podcast(filename: str):
-    """
-    Download generated podcast audio file.
-    """
-    try:
-        # Adjust path based on where audio files are saved
-        audio_path = PROJECT_ROOT / filename
-        
-        if not audio_path.exists():
-            raise HTTPException(status_code=404, detail="Audio file not found")
-        
-        def iterfile():
-            with open(audio_path, mode="rb") as file_like:
-                yield from file_like
-        
-        return StreamingResponse(
-            iterfile(),
-            media_type="audio/mpeg",
-            headers={
-                "Content-Disposition": f"attachment; filename={filename}"
-            }
-        )
     
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error downloading podcast: {str(e)}"
-        )
-
+    
 
 # ============================================================================
 # 4. USER PROFILE ENDPOINTS (Future Enhancement)

@@ -188,6 +188,4 @@ class AgentsService:
         podcast_script = script_response.text
 
         # 3. Convert Script to Audio (ElevenLabs Tool)
-        audio = convert_script_to_audio(podcast_script)
-        
-        save(audio, filename="podcast_test.mp3")
+        return convert_script_to_audio(podcast_script)
