@@ -58,8 +58,8 @@ class ClearSessionRequest(BaseModel):
 
 class ReportRequest(BaseModel):
     topics: str = Field(..., description="Topics to generate report on")
-    time_range: str = Field(..., description="Time range for news articles (e.g., 'last_7_days', 'last_month')")
-    structure: str = Field(default="executive_summary", description="Report structure type")
+    time_range: str = Field(..., description="Time range for news articles (e.g., 'weekly', 'monthly')")
+    structure: str = Field(default="Introduction, Extensive Summary, Wrap up", description="Report structure type")
     user_id: str = Field(..., description="User identifier")
 
 class ReportResponse(BaseModel):
