@@ -39,7 +39,6 @@ class CosmosDBService:
 
 
 
-    # observe por causa dos embeddings
     def index_article(self, contents:list[str], article_title:str, article_id:int, article_date:str) -> None:
         """
         Insert chunks with embeddings into Azure Cosmos DB.
@@ -185,7 +184,7 @@ class CosmosDBService:
 
 
 
-    @observe(as_type="retrieval")
+    @observe(as_type="retriever")
     def rag_retrieval(self, query: str, start_date: str = None, end_date: str = None, k: int = 5) -> str:
         """
         Performs vector similarity search, handling embedding generation internally.

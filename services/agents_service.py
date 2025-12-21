@@ -6,7 +6,6 @@ from utils.prompt_manager import PromptLoader
 
 # Service Dependencies
 from services.cosmos_db_service import CosmosDBService
-from services.MOCK_cosmos_db_service import MockCosmosDBService
 
 # Import the Tools
 from tools.choosing_tavily import scrape_url_realtime
@@ -29,7 +28,7 @@ class AgentsService:
         self.sessions = {}
 
         # 2. Initialize Service Dependencies
-        self.cosmos_db_service = MockCosmosDBService()
+        self.cosmos_db_service = CosmosDBService()
         
     # ========================================================================
     # 1. CONVERSATIONAL AGENT (Chat Page)
@@ -122,7 +121,7 @@ class AgentsService:
         # 1. Retrieve Context (Manual Tool Execution)
         # We reuse the same tool logic, but we force it to run now.
         context = rag_trigger(query=topics, time_scope=time_range)
-
+        print("RAG CONTEXT:", context)
         # 2. System Instructions
         user_instructions = self.cosmos_db_service.retrieve_user_instructions(user_id)
         full_system_instruction = self.prompts.format(
