@@ -224,7 +224,7 @@ async def generate_podcast(request: PodcastRequest):
 # ============================================================================
 # 4. USER PROFILE ENDPOINTS (Future Enhancement)
 # ============================================================================
-
+    
 @app.get("/api/user/{user_id}/instructions")
 async def get_user_instructions(user_id: str):
     """
@@ -233,12 +233,16 @@ async def get_user_instructions(user_id: str):
     try:
         profile_data = agents_service.cosmos_db_service.retrieve_user_instructions(user_id)
         
+        if profile_data is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        
         return ShortUserProfileResponse(
             user_id=user_id,
             instructions=profile_data["system_instructions"],
             display_name=profile_data["display_name"]
         )
-    
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

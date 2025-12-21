@@ -267,12 +267,12 @@ class CosmosDBService:
             }
         
         except exceptions.CosmosResourceNotFoundError:
-            # User doesn't exist yet, return default empty strings
-            return {"system_instructions": "", "display_name": ""}
+            # User doesn't exist yet
+            return None
             
         except Exception as e:
             print(f"Error retrieving user profile: {e}")
-            return {"system_instructions": "", "display_name": ""}
+            return None
     
 
 

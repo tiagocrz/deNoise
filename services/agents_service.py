@@ -46,6 +46,14 @@ class AgentsService:
 
         # 3. Prepare System Instructions (User Profile)
         user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+
+        if user_profile:
+            custom_instructions = user_profile["system_instructions"]
+            display_name = user_profile["display_name"]
+        else:
+            # For non logged in users
+            custom_instructions = ""
+            display_name = ""
         
         custom_instructions = user_profile["system_instructions"]
         display_name = user_profile["display_name"]
