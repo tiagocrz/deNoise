@@ -14,8 +14,8 @@ class MockCosmosDBService:
 
         # Initialize Cosmos
         self.client = CosmosClient(
-            url=os.getenv("COSMOS_ENDPOINT"), 
-            credential=os.getenv("COSMOS_KEY")
+            url=os.getenv("DOCUMENT_DB_URI"), 
+            credential=os.getenv("AZURE_PRIMARY_KEY")
         )
         self.database = self.client.get_database_client(db_name)
         
