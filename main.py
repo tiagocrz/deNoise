@@ -76,6 +76,12 @@ class PodcastResponse(BaseModel):
     audio_url: str = Field(..., description="URL to download audio file")
     timestamp: str = Field(..., description="Podcast generation timestamp")
 
+class UserProfileRequest(BaseModel):
+    user_id: str = Field(..., description="Unique user identifier")
+    email: str = Field(..., description="User's email address")
+    display_name: str = Field(..., description="User's chosen display name")
+    system_instructions: str = Field(..., description="Custom system instructions for the generate_content calls")
+
 class HealthResponse(BaseModel):
     status: str
     version: str
@@ -229,6 +235,27 @@ async def get_user_instructions(user_id: str):
             detail=f"Error retrieving user instructions: {str(e)}"
         )
 
+
+@app.post("/api/user/profile")
+async def sync_user_profile(profile: UserProfileRequest):
+    """
+    Create or Update user profile settings.
+    """
+    try:
+        # Convert Pydantic model to dict
+        profile_data = profile.dict()
+
+        # Call the service to save to CosmosDB
+        agents_service.cosmos_db_service.sync_user_profile(profile_data)
+
+        return {"status": "success", "message": "Profile updated"}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error saving profile: {str(e)}"
+        )
+    
 
 # ============================================================================
 # Error Handlers

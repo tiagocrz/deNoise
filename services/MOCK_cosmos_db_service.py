@@ -1,14 +1,28 @@
 # services/cosmos_db_service_mock.py (MOCK FILE)
+import os
+from azure.cosmos import CosmosClient, exceptions
+from google import genai
 
 class MockCosmosDBService:
     """
     A temporary class to replace the real CosmosDBService for testing.
     It returns hardcoded, made-up data for the RAG pipeline.
     """
-    def __init__(self, db_name: str = "denoise_db"):
-        # We don't need real clients (Gemini or Cosmos) in the mock
-        print("MOCK SERVICE INITIALIZED: Using hardcoded test data.")
-        pass
+    def __init__(self, db_name: str = "deNoise"): # Ensure this matches your Azure DB name
+        # Initialize Gemini
+        self.gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY")) 
+
+        # Initialize Cosmos
+        self.client = CosmosClient(
+            url=os.getenv("COSMOS_ENDPOINT"), 
+            credential=os.getenv("COSMOS_KEY")
+        )
+        self.database = self.client.get_database_client(db_name)
+        
+        # Connect to Containers
+        self.vector_db = self.database.get_container_client("newsEmbeddings")
+        # Ensure you create a container named 'UserDB' in Azure with partition key '/user_id'
+        self.user_db = self.database.get_container_client("userProfiles")
 
     def rag_retrieval(self, query: str, start_date: str, end_date: str, k: int = 5) -> str:
         """
@@ -32,22 +46,32 @@ The user queried about: {query}. The time filter applied was from {start_date} t
 
     def retrieve_user_instructions(self, user_id: str) -> str:
         """
-        Mocks fetching custom instructions, expanded for different user types.
+        Fetches custom instructions from UserDB. 
+        Returns empty string if user not found.
         """
-        user_id = user_id.lower()
+        try:
+            # We assume the document ID is the user_id and partition key is also user_id
+            item = self.user_db.read_item(item=user_id, partition_key=user_id)
+            return item.get("system_instructions", "")
         
-        if "investor" in user_id:
-            # Instructions for Investors
-            return "You are a cautious late-stage investor. Emphasize risk analysis, team experience, and market valuation when synthesizing information."
-        
-        elif "hub_manager" in user_id:
-            # Instructions for Hub Managers
-            return "You are focused on regional development (Lisbon/Porto) and policy. Highlight talent reports and local investment activity."
-        
-        elif "enthusiast" in user_id:
-            # Instructions for General Enthusiasts
-            return "Be positive and focus on aspirational news like new funding and inspiring success stories."
+        except exceptions.CosmosResourceNotFoundError:
+            # User doesn't exist yet, return default empty instructions
+            return ""
+        except Exception as e:
+            print(f"Error retrieving user profile: {e}")
+            return ""
+    
+    def sync_user_profile(self, user_data: dict):
+        """
+        Upserts (Create or Update) user profile data to the UserDB.
+        """
+        try:
+            # Ensure the item has the required 'id' field for CosmosDB
+            user_data["id"] = user_data["user_id"]
             
-        else:
-            # Default instructions
-            return "You are a general innovation enthusiast. Be informative and neutral."
+            self.user_db.upsert_item(user_data)
+            return True
+            
+        except Exception as e:
+            print(f"Error syncing user profile: {e}")
+            raise e
