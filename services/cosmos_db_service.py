@@ -39,7 +39,6 @@ class CosmosDBService:
 
 
 
-    # observe por causa dos embeddings
     def index_article(self, contents:list[str], article_title:str, article_id:int, article_date:str) -> None:
         """
         Insert chunks with embeddings into Azure Cosmos DB.
@@ -185,7 +184,7 @@ class CosmosDBService:
 
 
 
-    @observe(as_type="retrieval")
+    @observe(as_type="retriever")
     def rag_retrieval(self, query: str, start_date: str = None, end_date: str = None, k: int = 5) -> str:
         """
         Performs vector similarity search, handling embedding generation internally.
@@ -253,22 +252,27 @@ class CosmosDBService:
 
 
 
-    def retrieve_user_instructions(self, user_id: str) -> str:
+    def retrieve_user_instructions(self, user_id: str) -> dict:
         """
-        Fetches custom instructions from UserDB. 
-        Returns empty string if user not found.
+        Fetches custom instructions AND display name from UserDB. 
+        Returns a dictionary with keys 'system_instructions' and 'display_name'.
         """
         try:
             # We assume the document ID is the user_id and partition key is also user_id
             item = self.user_db.read_item(item=user_id, partition_key=user_id)
-            return item.get("system_instructions", "")
+            
+            return {
+                "system_instructions": item.get("system_instructions", ""),
+                "display_name": item.get("display_name", "")
+            }
         
         except exceptions.CosmosResourceNotFoundError:
-            # User doesn't exist yet, return default empty instructions
-            return ""
+            # User doesn't exist yet, return default empty strings
+            return {"system_instructions": "", "display_name": ""}
+            
         except Exception as e:
             print(f"Error retrieving user profile: {e}")
-            return ""
+            return {"system_instructions": "", "display_name": ""}
     
 
 

@@ -82,6 +82,11 @@ class UserProfileRequest(BaseModel):
     display_name: str = Field(..., description="User's chosen display name")
     system_instructions: str = Field(..., description="Custom system instructions for the generate_content calls")
 
+class ShortUserProfileResponse(BaseModel):
+    user_id: str = Field(..., description="Unique user identifier")
+    instructions: str = Field(..., description="Custom system instructions")
+    display_name: str = Field(..., description="User's display name")
+
 class HealthResponse(BaseModel):
     status: str
     version: str
@@ -223,17 +228,19 @@ async def generate_podcast(request: PodcastRequest):
 @app.get("/api/user/{user_id}/instructions")
 async def get_user_instructions(user_id: str):
     """
-    Retrieve custom instructions for a specific user.
+    Retrieve custom instructions and display namefor a specific user.
     """
     try:
-        instructions = agents_service.cosmos_db_service.retrieve_user_instructions(user_id)
-        return {"user_id": user_id, "instructions": instructions}
+        profile_data = agents_service.cosmos_db_service.retrieve_user_instructions(user_id)
+        
+        return ShortUserProfileResponse(
+            user_id=user_id,
+            instructions=profile_data["system_instructions"],
+            display_name=profile_data["display_name"]
+        )
     
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error retrieving user instructions: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/user/profile")

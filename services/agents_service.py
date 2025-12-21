@@ -6,7 +6,6 @@ from utils.prompt_manager import PromptLoader
 
 # Service Dependencies
 from services.cosmos_db_service import CosmosDBService
-from services.MOCK_cosmos_db_service import MockCosmosDBService
 
 # Import the Tools
 from tools.choosing_tavily import scrape_url_realtime
@@ -29,7 +28,7 @@ class AgentsService:
         self.sessions = {}
 
         # 2. Initialize Service Dependencies
-        self.cosmos_db_service = MockCosmosDBService()
+        self.cosmos_db_service = CosmosDBService()
         
     # ========================================================================
     # 1. CONVERSATIONAL AGENT (Chat Page)
@@ -49,11 +48,21 @@ class AgentsService:
         agent_tools = [rag_trigger, scrape_url_realtime]
 
         # 3. Prepare System Instructions (User Profile)
-        custom_instructions = self.cosmos_db_service.retrieve_user_instructions(user_id)
-        full_system_instruction = self.prompts.format(
+        user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        
+        custom_instructions = user_profile["system_instructions"]
+        display_name = user_profile["display_name"]
+
+        # Format the base system instruction
+        base_system_instruction = self.prompts.format(
             "conversational_agent_system", 
             custom_instructions=custom_instructions
         )
+        
+        if display_name != "":
+            full_system_instruction = f"{base_system_instruction}\n\nThe user's name is {display_name}. Address them by name when appropriate."
+        else:
+            full_system_instruction = base_system_instruction
         
         # 4. Add the NEW User Message to History
         # We create a structured 'Content' object for the user's prompt
@@ -124,7 +133,8 @@ class AgentsService:
         context = rag_trigger(query=topics, time_scope=time_range)
 
         # 2. System Instructions
-        user_instructions = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        user_instructions = user_profile["system_instructions"]
         full_system_instruction = self.prompts.format(
             "report_generator_system",
             structure=structure,
@@ -165,7 +175,8 @@ class AgentsService:
         context = rag_trigger(query=topics, time_scope=time_range)
         
         # 2. Generate Script
-        user_instructions = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        user_instructions = user_profile["system_instructions"]
         full_system_instruction = self.prompts.format(
             "podcast_generator_system",
             structure=structure,
