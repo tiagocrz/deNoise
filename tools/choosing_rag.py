@@ -1,7 +1,7 @@
 from typing import Literal
 from datetime import datetime, timedelta
 from langfuse import observe
-from services.MOCK_cosmos_db_service import MockCosmosDBService
+from services.cosmos_db_service import CosmosDBService
 
 @observe(as_type="tool")
 # Ensure the function signature matches the tool you will expose to Gemini
@@ -41,7 +41,7 @@ def get_time_range_for_rag(time_scope: Literal["daily", "weekly", "monthly"] = "
         start_date = now - timedelta(days=30)
         
     # 3. Return the dates as ISO format strings for database consumption
-    return start_date.isoformat(), end_date
+    return start_date.isoformat().split('T')[0], end_date.split('T')[0]
 
 
 @observe(as_type="tool")
@@ -66,7 +66,7 @@ def rag_trigger(query: str, time_scope: str = "monthly") -> str:
     """
 
     # 1. Instantiate Services
-    db_service = MockCosmosDBService()
+    db_service = CosmosDBService()
 
     # 2. Calculate Date Range (Internal Helper Logic)
     start_date, end_date = get_time_range_for_rag(time_scope)

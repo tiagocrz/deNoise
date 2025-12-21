@@ -3,23 +3,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 from azure.cosmos import CosmosClient, PartitionKey
 
-
 PROJECT_ROOT = Path(__file__).resolve().parent
 env_path = PROJECT_ROOT / '.env'
 print("Project root path:", PROJECT_ROOT)
 load_dotenv(env_path, override=True)
 
-
-## Check if the loading was successful
-#if not os.getenv("GEMINI_API_KEY"):
-#    raise ValueError("Failed to load environment variables from .env file")
-#else:
-#    print(os.getenv("GEMINI_API_KEY")[:5] + "..." )  # Print first 5 characters of the key for verification
-#    print("Environment variables loaded successfully")
-
-
-# Load the environment variables
-DOCUMENT_DB_URI = os.getenv("DOCUMENT_DB_URI")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 AZURE_PRIMARY_KEY = os.getenv("AZURE_PRIMARY_KEY")
 AZURE_URL = os.getenv("AZURE_URL")
@@ -74,6 +62,13 @@ COSMOSDB_VECTOR_SEARCH_FIELDS = {
         "embedding_field": 'embedding'           
     }
 
+
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY")
+LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY")
+LANGFUSE_HOST = os.getenv("LANGFUSE_HOST")
 
 def connect_to_cosmosdb():
     client = CosmosClient(url=AZURE_URL, credential=AZURE_PRIMARY_KEY)

@@ -1,34 +1,10 @@
-import warnings
-warnings.filterwarnings("ignore")
-import json 
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 
-from app_settings import (
-    DOCUMENT_DB_URI,
-    AZURE_PRIMARY_KEY, AZURE_URL,
-    COSMOSDB_INDEXING_POLICY, COSMOSDB_VECTOR_EMBEDDING_POLICY, COSMOSDB_VECTOR_SEARCH_FIELDS,
-    GEMINI_API_KEY,
-    connect_to_cosmosdb
-)
-
-import pandas as pd
+from app_settings import GEMINI_API_KEY
 from google import genai
 from google.genai import types
-from langchain_core.documents import Document
-from langchain_azure_ai.vectorstores import AzureCosmosDBNoSqlVectorSearch
-from azure.cosmos import PartitionKey
-
-
-def insert_articles(db, container_name, articles: pd.DataFrame):
-    """
-    Simple bulk insert of objects in either non-vector containers.
-    """
-    container = db.get_container_client(container_name)
-    for article in articles.to_dict(orient='records'):
-        container.upsert_item(article)
-
 
 
 # Embedding Service Object (adapted implementation from classes)
@@ -91,7 +67,7 @@ class EmbeddingService:
             return embedding
 
         except Exception as e:
-            print(f"❌ Error generating embedding: {e}")
+            print(f"Error generating embedding: {e}")
             raise 
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
@@ -132,68 +108,3 @@ class EmbeddingService:
 
         print(f"✅ Completed: {len([e for e in embeddings if e is not None])}/{len(texts)} embeddings generated")
         return embeddings
-    
-
-
-# Instatiate embedding service
-embeddings = EmbeddingService()
-
-
-
-def index_article(contents:list[str], article_title:str, article_id:int, article_date:str) -> None:
-    """
-    Insert chunks with embeddings into Azure Cosmos DB.
-    It can either be a company or opportunity file, based on the company_id or opportunity_id.
-    Since the metadata is different, the metadata is added based on the company_id or opportunity_id.
-    
-    :param chunks: List of chunks to be indexed
-    :param file_codename: Codename of the file or Memory id as string
-    :param company_id: Company ID
-    :param opportunity_id: Opportunity ID
-
-    :return: If it doesn't raise an exception, it was successful
-    """
-
-    container_name = "newsEmbeddings" 
-    
-    try:
-        documents = [
-            Document(
-                page_content=json.dumps(str(content)),
-                metadata={
-                    "title": article_title,
-                    "article_id": str(article_id),
-                    "date": article_date,
-                    "is_title": True if content == article_title else False
-                }
-            )
-            for content in contents
-        ]
-
-        cosmosdb_client, cosmos_db = connect_to_cosmosdb()
-
-        partition_key = PartitionKey(path="/id")
-        cosmos_container_properties = {"partition_key": partition_key}
-
-        AzureCosmosDBNoSqlVectorSearch.from_documents(
-            documents=documents,
-            embedding=embeddings,
-            cosmos_client=cosmosdb_client,
-            database_name='deNoise',
-            container_name=container_name,
-            full_text_policy=None,
-            indexing_policy=COSMOSDB_INDEXING_POLICY,
-            vector_embedding_policy=COSMOSDB_VECTOR_EMBEDDING_POLICY,
-            cosmos_container_properties=cosmos_container_properties,
-            vector_search_fields=COSMOSDB_VECTOR_SEARCH_FIELDS,
-            cosmos_database_properties={},
-            full_text_search_enabled=False
-        )
-
-    except Exception as e:
-        print(f"Error indexing article: {e}")
-        raise
-
-    return  
-
-
