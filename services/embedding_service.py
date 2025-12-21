@@ -1,11 +1,8 @@
 import os
-import sys
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-
 from app_settings import GEMINI_API_KEY
 from google import genai
 from google.genai import types
-
+from langfuse import observe
 
 # Embedding Service Object (adapted implementation from classes)
 class EmbeddingService:
@@ -29,6 +26,7 @@ class EmbeddingService:
         self.model = "gemini-embedding-001"
         self.output_dimensionality = output_dimensionality
 
+    @observe(as_type="embedding")
     def embed_query(self, text: str) -> list[float]:
         """
         Generate an embedding vector for the given text.

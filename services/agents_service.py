@@ -131,7 +131,7 @@ class AgentsService:
         # 1. Retrieve Context (Manual Tool Execution)
         # We reuse the same tool logic, but we force it to run now.
         context = rag_trigger(query=topics, time_scope=time_range)
-
+        print("RAG CONTEXT:", context)
         # 2. System Instructions
         user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
         user_instructions = user_profile["system_instructions"]
