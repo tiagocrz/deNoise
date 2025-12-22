@@ -1,4 +1,7 @@
-# Script to run both scrapers (Gmail and Tavily)  and update the database 
+'''
+Script to run both scrapers (Gmail and Tavily) and update the database.
+We ended up not using Tavily scraper due to worse retrieval performance.
+'''
 
 from app_settings import (
     COSMOSDB_INDEXING_POLICY,
@@ -13,8 +16,7 @@ from azure.cosmos import PartitionKey
 
 def recreate_container(container_name: str):
     """
-    Delete and recreate any container.
-    This is the fastest way to clear all data.
+    Delete and recreate any container, when building the new database from scratch.
     """
     
     cosmosdb_client, cosmos_db = connect_to_cosmosdb()
@@ -43,9 +45,7 @@ def recreate_container(container_name: str):
             partition_key=partition_key
         )
     
-    print(f"✅ Recreated {container_name} container")
-
-
+    print(f"Recreated {container_name} container")
 
 
 
@@ -81,10 +81,10 @@ if __name__ == "__main__":
                 article_id=article['id'],
                 article_date=article['date']
             )
-            print(f"✅ Indexed successfully: {article['title']}")
+            print(f"Indexed successfully: {article['title']}")
 
         except Exception as e:
-            print(f"❌ Failed to index article {article['title']}: {e}")
+            print(f"Failed to index article {article['title']}: {e}")
 
 
-    print(f"✅ All {len(list(cosmosdb_service.articles_db.read_all_items()))} articles indexed.")
+    print(f"All {len(list(cosmosdb_service.articles_db.read_all_items()))} articles indexed.")

@@ -6,22 +6,10 @@ from langfuse import observe
 
 # Embedding Service Object (adapted implementation from classes)
 class EmbeddingService:
-    """
-    Service for generating text embeddings using Google Gemini's embedding model.
-
-    Uses gemini-embedding-001 with Matryoshka Representation Learning (MRL)
-    to generate flexible-dimension embeddings for semantic search.
-    """
-
+    '''
+    Service for generating text embeddings using Google Gemini's embedding model (gemini-embedding-001).
+    '''
     def __init__(self, output_dimensionality: int = 3072):
-        """
-        Initialize the EmbeddingService.
-
-        Args:
-            output_dimensionality: Embedding vector dimensions (128-3072).
-                                 Recommended: 768, 1536, or 3072.
-                                 Default: 3072 for optimal performance.
-        """
         self.client = genai.Client(api_key=GEMINI_API_KEY)
         self.model = "gemini-embedding-001"
         self.output_dimensionality = output_dimensionality
@@ -29,23 +17,7 @@ class EmbeddingService:
     @observe(as_type="embedding")
     def embed_query(self, text: str) -> list[float]:
         """
-        Generate an embedding vector for the given text.
-
-        Args:
-            text: Input text to embed (max 2,048 tokens)
-
-        Returns:
-            List of floats representing the embedding vector
-
-        Raises:
-            ValueError: If text exceeds token limit
-            Exception: If API call fails
-
-        Example:
-            >>> service = EmbeddingService()
-            >>> embedding = service.generate_embedding("Hello world")
-            >>> len(embedding)
-            768
+        Generate an embedding vector for the given prompt/article/title.
         """
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
@@ -70,24 +42,7 @@ class EmbeddingService:
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         """
-        Generate embeddings for multiple texts.
-
-        Note: Due to API rate limits (100 RPM free tier), this processes
-        texts sequentially. For production use with many texts, consider
-        implementing rate limiting and batching strategies.
-
-        Args:
-            texts: List of text strings to embed
-
-        Returns:
-            List of embedding vectors, one per input text
-
-        Example:
-            >>> service = EmbeddingService()
-            >>> texts = ["First text", "Second text"]
-            >>> embeddings = service.generate_embeddings_batch(texts)
-            >>> len(embeddings)
-            2
+        Generate embeddings for multiple inputs.
         """
         embeddings = []
 
@@ -97,12 +52,12 @@ class EmbeddingService:
                 embeddings.append(embedding)
 
                 if (i + 1) % 10 == 0:
-                    print(f"✅ Processed {i + 1}/{len(texts)} embeddings")
+                    print(f"Processed {i + 1}/{len(texts)} embeddings")
 
             except Exception as e:
-                print(f"❌ Failed to embed text {i}: {text[:50]}... Error: {e}")
+                print(f"Failed to embed text {i}: {text[:50]}... Error: {e}")
                 # Append None for failed embeddings to maintain index alignment
                 embeddings.append(None)
 
-        print(f"✅ Completed: {len([e for e in embeddings if e is not None])}/{len(texts)} embeddings generated")
+        print(f"Completed: {len([e for e in embeddings if e is not None])}/{len(texts)} embeddings generated")
         return embeddings

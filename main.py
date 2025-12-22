@@ -1,50 +1,41 @@
-"""
-FastAPI Backend for deNoise - AI News Processing Platform
-This API provides endpoints for conversational chat, report generation, and podcast creation.
-"""
+'''
+FastAPI backend
+Generates endpoints for all the functions and methods that the frontend will call.
+'''
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from typing import Optional, List
-import os
 from datetime import datetime
-import io
 
-# Import services
 from services.agents_service import AgentsService
 from app_settings import PROJECT_ROOT
 
-# Initialize FastAPI app
+# FastAPI app
 app = FastAPI(
     title="deNoise API",
     description="AI-powered news processing platform with RAG capabilities",
     version="1.0.0"
 )
 
-# CORS Configuration - Adjust origins based on your frontend deployment
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # React default
-        "http://localhost:5173",  # Vite default
-        "http://localhost:8080",  # Vue default
-        "https://denoise.lovable.app"  # Production URL
+        "http://localhost:3000", # React default
+        "http://localhost:5173", # Vite default
+        "http://localhost:8080", # Vue default
+        "https://denoise.lovable.app" # Production URL
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize the Agents Service
 agents_service = AgentsService(model="gemini-2.5-flash")
 
 
-# ============================================================================
-# Request/Response Models
-# ============================================================================
-
+# Request/Response objects for interaction with the frontend
 class ChatRequest(BaseModel):
     prompt: str = Field(..., description="User's chat message")
     user_id: str = Field(..., description="Unique user identifier")
@@ -68,12 +59,12 @@ class ReportResponse(BaseModel):
 
 class PodcastRequest(BaseModel):
     topics: str = Field(..., description="Topics for podcast content")
-    time_range: str = Field(..., description="Time range for news articles")
+    time_range: str = Field(..., description="Time range for news articles (e.g., 'weekly', 'monthly')")
     structure: str = Field(..., description="Podcast structure/style")
     user_id: str = Field(..., description="User identifier")
 
 class PodcastResponse(BaseModel):
-    audio_url: str = Field(..., description="URL to download audio file")
+    audio_url: str = Field(..., description="URI audio file")
     timestamp: str = Field(..., description="Podcast generation timestamp")
 
 class UserProfileRequest(BaseModel):
@@ -93,13 +84,14 @@ class HealthResponse(BaseModel):
     timestamp: str
 
 
-# ============================================================================
 # API Endpoints
-# ============================================================================
 
+# Health
 @app.get("/", response_model=HealthResponse)
 async def root():
-    """Root endpoint - Health check"""
+    '''
+    Root endpoint - Health check
+    '''
     return HealthResponse(
         status="healthy",
         version="1.0.0",
@@ -108,7 +100,9 @@ async def root():
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """Health check endpoint"""
+    '''
+    Health check endpoint
+    '''
     return HealthResponse(
         status="healthy",
         version="1.0.0",
@@ -116,16 +110,13 @@ async def health_check():
     )
 
 
-# ============================================================================
-# 1. CONVERSATIONAL CHAT ENDPOINTS
-# ============================================================================
-
+# Conversational agent endpoints
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """
+    '''
     Conversational chat endpoint with RAG capabilities.
     Maintains session context per user.
-    """
+    '''
     try:
         response = agents_service.generate_chat_answer(
             prompt=request.prompt,
@@ -145,9 +136,9 @@ async def chat(request: ChatRequest):
 
 @app.post("/api/chat/clear")
 async def clear_chat_session(request: ClearSessionRequest):
-    """
+    '''
     Clear chat history for a specific user.
-    """
+    '''
     try:
         result = agents_service.clear_session_memory(request.user_id)
         return JSONResponse(content=result)
@@ -159,16 +150,12 @@ async def clear_chat_session(request: ClearSessionRequest):
         )
 
 
-# ============================================================================
-# 2. REPORT GENERATION ENDPOINTS
-# ============================================================================
-
+# Report generation endpoints
 @app.post("/api/report", response_model=ReportResponse)
 async def generate_report(request: ReportRequest):
-    """
-    Generate a structured report based on topics and time range.
-    Uses deterministic RAG for grounded results.
-    """
+    '''
+    Generate a structured report based on retrieved context and instructions.
+    '''
     try:
         report_content = agents_service.generate_report(
             topics=request.topics,
@@ -189,16 +176,12 @@ async def generate_report(request: ReportRequest):
         )
 
 
-# ============================================================================
-# 3. PODCAST GENERATION ENDPOINTS
-# ============================================================================
-
+# Podcast generation endpoints
 @app.post("/api/podcast/generate", response_model=PodcastResponse)
 async def generate_podcast(request: PodcastRequest):
-    """
-    Generate podcast script and audio file.
-    Returns both the script text and a reference to the audio file.
-    """
+    '''
+    Generate the podcast based on retrieved context and instructions.
+    '''
     try:
         # UPDATED: Service now returns only the Data URI string
         audio_data_uri = agents_service.generate_podcast(
@@ -220,16 +203,12 @@ async def generate_podcast(request: PodcastRequest):
         )
     
     
-
-# ============================================================================
-# 4. USER PROFILE ENDPOINTS (Future Enhancement)
-# ============================================================================
-    
+# User profile endpoints    
 @app.get("/api/user/{user_id}/instructions")
 async def get_user_instructions(user_id: str):
-    """
-    Retrieve custom instructions and display namefor a specific user.
-    """
+    '''
+    Retrieve custom instructions and display name for a specific user.
+    '''
     try:
         profile_data = agents_service.cosmos_db_service.retrieve_user_instructions(user_id)
         
@@ -249,14 +228,13 @@ async def get_user_instructions(user_id: str):
 
 @app.post("/api/user/profile")
 async def sync_user_profile(profile: UserProfileRequest):
-    """
+    '''
     Create or Update user profile settings.
-    """
+    '''
     try:
         # Convert Pydantic model to dict
         profile_data = profile.dict()
 
-        # Call the service to save to CosmosDB
         agents_service.cosmos_db_service.sync_user_profile(profile_data)
 
         return {"status": "success", "message": "Profile updated"}
@@ -268,12 +246,12 @@ async def sync_user_profile(profile: UserProfileRequest):
         )
     
 
-# ============================================================================
-# Error Handlers
-# ============================================================================
-
+# Error handlers
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
+    '''
+    Error Handling for 404 Not Found
+    '''
     return JSONResponse(
         status_code=404,
         content={"detail": "Endpoint not found"}
@@ -281,37 +259,34 @@ async def not_found_handler(request, exc):
 
 @app.exception_handler(500)
 async def internal_error_handler(request, exc):
+    '''
+    Error Handling for 500 Internal Server Error
+    '''
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"}
     )
 
 
-# ============================================================================
-# Startup/Shutdown Events
-# ============================================================================
-
+# Startup/shutdown handlers
 @app.on_event("startup")
 async def startup_event():
-    """
+    '''
     Initialize services and connections on startup.
-    """
+    '''
     print("Starting deNoise API...")
     print(f"Project root: {PROJECT_ROOT}")
     print(f"Environment loaded successfully")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """
+    '''
     Cleanup on shutdown.
-    """
+    '''
     print("Shutting down deNoise API...")
 
 
-# ============================================================================
-# Run the application
-# ============================================================================
-
+# Run the app
 if __name__ == "__main__":
     import uvicorn
     
@@ -320,6 +295,6 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,  # Auto-reload on code changes
+        reload=True,
         log_level="info"
     )
