@@ -15,7 +15,7 @@ Orchestrates three specialized AI agents powered by Google Gemini (gemini-2.5-fl
 
 **Features:** Per-user session management, user profile integration for personalization, Langfuse observability
 
-**Tools Used:** RAG trigger (semantic search), Tavily (real-time web search)
+**Tools Used:** rag_trigger (semantic search), scrape_url_realtime (real-time web search)
 
 ### CosmosDBService (`cosmos_db_service.py`)
 

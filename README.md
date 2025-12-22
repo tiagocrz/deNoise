@@ -27,7 +27,7 @@
 3. **AI-Powered Podcast Creation** - Convert news content into engaging audio formats
 
 The platform can automatically scrape and process news from email newsletters, store them with semantic embeddings in a vector database, and provide intelligent retrieval.
-In the implementation, the current date corresponds to 2025/12/22 (date of final scraping), to make daily and weekly time windows work; however, the scraping could be performed at any time. This was a deliberate choice to keep the setup unchanged until the project defence day.
+In the implementation, the current date corresponds to 2025/12/22 (date of final scraping), to make daily, weekly and monthly time windows work; however, the scraping could be performed at any time. This was a deliberate choice to keep the setup unchanged until the project defence day.
 
 ---
 
@@ -94,10 +94,9 @@ In the implementation, the current date corresponds to 2025/12/22 (date of final
 ### FastAPI Backend Integration
 
 - **REST API Architecture**: Clean endpoints for all agent interactions
-- **CORS Configuration**: Supports frontend requests from Lovable deployment
 - **Request/Response Models**: Pydantic validation for type safety
 - **User Session Management**: Per-user conversation history and context
-- **Production-Ready**: Deployed with Render 
+- **Production-Ready**: Backend deployed in Render 
 
 ### User Profile & Personalization
 
@@ -109,7 +108,7 @@ In the implementation, the current date corresponds to 2025/12/22 (date of final
 
 ### Observability & Monitoring
 
-- **Langfuse Integration**: LLM performance tracking and token usage monitoring
+- **Langfuse Integration**: Observing LLM calls (inputs, returns and function calling)
 - **Health Check Endpoints**: Monitor API availability and status
 
 ---
@@ -132,7 +131,7 @@ In the implementation, the current date corresponds to 2025/12/22 (date of final
 - **Model**: gemini-2.5-flash for text generation
 - **Embeddings**: gemini-embedding-001 (3072 dimensions)
 - **Rationale**: 
-  - Free tier offers more than enough capacity for our needs
+  - 3 month Free tier offers more than enough capacity for our needs
   - Team familiarity with the platform
   - Seamless integration of both LLM and embedding models in a unified system
 
@@ -158,7 +157,7 @@ In the implementation, the current date corresponds to 2025/12/22 (date of final
 
 #### API Framework
 - **FastAPI** - Modern, high-performance REST API web framework
-- **Uvicorn** - Sserver for production deployment
+- **Uvicorn** - Server for production deployment
 - **Pydantic** - Request/response validation and data modeling
 
 #### Observability
@@ -199,10 +198,9 @@ In the implementation, the current date corresponds to 2025/12/22 (date of final
 
 For comprehensive setup instructions including:
 - Complete environment configuration
-- API key acquisition guides
+- API keys needed
 - Gmail OAuth2 setup
 - Azure Cosmos DB configuration
-- Troubleshooting tips
 
 **See [environment_setup.md](environment_setup.md)**
 
