@@ -1,6 +1,7 @@
 import os
 from tavily import TavilyClient
 from langfuse import observe
+from app_settings import TAVILY_API_KEY
 
 @observe(as_type="tool")
 def scrape_url_realtime(url: str, prompt: str) -> str:
@@ -18,7 +19,7 @@ def scrape_url_realtime(url: str, prompt: str) -> str:
         prompt: The full, unmodified user question/prompt to guide the summarization.
     """
     
-    tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+    tavily = TavilyClient(api_key=TAVILY_API_KEY)
 
     result = tavily.search(
         query=prompt,

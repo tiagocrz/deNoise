@@ -3,6 +3,7 @@ from google import genai
 from google.genai import types
 from langfuse import observe
 from utils.prompt_manager import PromptLoader
+from app_settings import GEMINI_API_KEY
 
 # Service Dependencies
 from services.cosmos_db_service import CosmosDBService
@@ -19,7 +20,7 @@ class AgentsService:
 
     def __init__(self, model: str = "gemini-2.5-flash"):
         # 1. Initialize Core Dependencies
-        self.gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        self.gemini_client = genai.Client(api_key=GEMINI_API_KEY)
         self.model = model
         self.prompts = PromptLoader()
         self.sessions = {}

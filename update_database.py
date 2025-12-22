@@ -1,11 +1,12 @@
 # Script to run both scrapers (Gmail and Tavily)  and update the database 
 
-from app_settings import (COSMOSDB_INDEXING_POLICY, 
-                          COSMOSDB_VECTOR_EMBEDDING_POLICY, 
-                          connect_to_cosmosdb)
-
+from app_settings import (
+    COSMOSDB_INDEXING_POLICY,
+    COSMOSDB_VECTOR_EMBEDDING_POLICY,
+    connect_to_cosmosdb
+)
 from database_layer.gmail_scraping.db_building import scrape_gmail
-from database_layer.online_scraping.tavily_scraping import get_news_with_dates
+#from database_layer.tavily_scraping.tavily_scraping import get_news_with_dates
 from services.cosmos_db_service import CosmosDBService
 from azure.cosmos import PartitionKey
 
