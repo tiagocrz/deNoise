@@ -194,7 +194,6 @@ class CosmosDBService:
             container_name='newsEmbeddings',
             vector_embedding_policy=COSMOSDB_VECTOR_EMBEDDING_POLICY,
             indexing_policy=COSMOSDB_INDEXING_POLICY,
-            #vector_search_fields=COSMOSDB_VECTOR_SEARCH_FIELDS,
             cosmos_database_properties={},
             cosmos_container_properties=cosmos_container_properties
         )

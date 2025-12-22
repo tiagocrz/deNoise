@@ -53,7 +53,6 @@ def scrape_gmail():
     print("Step 2: Building structured news database...")
     news_database = build_news_database(df_newsletters)
 
-    # ALTERAR PARA METER DIRETAMENTE NA BASE DE DADOS
     #news_database.to_csv(OUTPUT_PATH, index=False)
     print("SCRAPPING FINISHED")
     return news_database.to_dict(orient="records")

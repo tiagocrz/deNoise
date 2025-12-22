@@ -78,7 +78,7 @@ class AgentsService:
         )
         self.sessions[user_id].append(user_message)
 
-        # Buil answer with tool usage, history and system instructions
+        # Build answer with tool usage, history and system instructions
         response = self.gemini_client.models.generate_content(
             model=self.model,
             contents=self.sessions[user_id],
