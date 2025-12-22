@@ -20,7 +20,7 @@
 
 ## Overview
 
-[deNoise](https://denoise.lovable.app/) is an intelligent news processing platform that leverages AI technologies to help users cut through information overload. The system combines Retrieval-Augmented Generation (RAG), vector databases, and large language models to provide three core capabilities:
+[deNoise](https://denoise.lovable.app/) is an intelligent news processing platform that leverages AI technologies to help users cut through information overload. The system combines Retrieval-Augmented Generation (RAG), vector databases, and large language models to provide three core capabilities, seamlessly accessible whether you’re on a PC or mobile device:
 
 1. **Conversational Chat Interface** - Natural language interaction with your news database
 2. **Automated Report Generation** - Create structured, topic-focused news summaries
