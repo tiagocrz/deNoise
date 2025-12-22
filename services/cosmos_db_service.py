@@ -219,13 +219,9 @@ class CosmosDBService:
         for date in time_range:
             filter_conditions.append(Condition(property="metadata.date", operator="$eq", value=date))
 
-        print(filter_conditions)
 
         if filter_conditions:
-            print("Applying filters.")
             pre_filter = PreFilter(conditions=filter_conditions, logical_operator="$or")
-            print(pre_filter)
-
 
             results = vector_search.similarity_search(
                 query=query,
@@ -235,7 +231,6 @@ class CosmosDBService:
 
 
         else:
-            print("No filters applied.")
             results = vector_search.similarity_search(
                 query=query,
                 k=k,
@@ -256,6 +251,7 @@ class CosmosDBService:
         """
         Fetches custom instructions AND display name from UserDB. 
         Returns a dictionary with keys 'system_instructions' and 'display_name'.
+        It's also used to check if user exists for Login/Signup purposes.
         """
         try:
             # We assume the document ID is the user_id and partition key is also user_id

@@ -44,9 +44,14 @@ class AgentsService:
         # 2. Define the Toolkit
         agent_tools = [rag_trigger, scrape_url_realtime]
 
-        # 3. Prepare System Instructions (User Profile)
-        user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        # For non-logged in user we skip the DB query
+        if user_id and user_id != "anonymous":
+            user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        else:
+        # Skip DB entirely for anonymous users
+            user_profile = None
 
+        # 3. Prepare System Instructions (User Profile)
         if user_profile:
             custom_instructions = user_profile["system_instructions"]
             display_name = user_profile["display_name"]
@@ -54,9 +59,6 @@ class AgentsService:
             # For non logged in users
             custom_instructions = ""
             display_name = ""
-        
-        custom_instructions = user_profile["system_instructions"]
-        display_name = user_profile["display_name"]
 
         # Format the base system instruction
         base_system_instruction = self.prompts.format(
@@ -137,13 +139,24 @@ class AgentsService:
         # We reuse the same tool logic, but we force it to run now.
         context = rag_trigger(query=topics, time_scope=time_range)
         print("RAG CONTEXT:", context)
+
         # 2. System Instructions
-        user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
-        user_instructions = user_profile["system_instructions"]
+        # For non-logged in user we skip the DB query
+        if user_id and user_id != "anonymous":
+            user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        else:
+        # Skip DB entirely for anonymous users
+            user_profile = None
+
+        if user_profile:
+            custom_instructions = user_profile["system_instructions"]
+        else:
+            custom_instructions = ""
+        
         full_system_instruction = self.prompts.format(
             "report_generator_system",
             structure=structure,
-            custom_instructions=user_instructions
+            custom_instructions=custom_instructions
         )
         
         # 3. Call Gemini (Context injected into prompt)
@@ -180,12 +193,20 @@ class AgentsService:
         context = rag_trigger(query=topics, time_scope=time_range)
         
         # 2. Generate Script
-        user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
-        user_instructions = user_profile["system_instructions"]
+        if user_id and user_id != "anonymous":
+            user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
+        else:
+            user_profile = None
+
+        if user_profile:
+            custom_instructions = user_profile["system_instructions"]
+        else:
+            custom_instructions = ""
+
         full_system_instruction = self.prompts.format(
             "podcast_generator_system",
             structure=structure,
-            custom_instructions=user_instructions
+            custom_instructions=custom_instructions
         )
 
         full_contents = [
