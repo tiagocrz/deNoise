@@ -6,12 +6,11 @@ import email.utils
 from datetime import datetime, timedelta
 import re
 
-# =========================================================================
-# Functions to extract all the wanted newsletters from Gmail to a dataset ||
-# =========================================================================
-
+# Functions to extract all the wanted newsletters from Gmail to a dataset
 def _extract_best_body(payload):
-    """Recursively searches all MIME parts for the best (HTML preferred) content."""
+    """
+    Recursively searches all MIME parts for the best (HTML preferred) content.
+    """
     html_body = None
     text_body = None
 
@@ -28,10 +27,8 @@ def _extract_best_body(payload):
     elif "parts" in payload:
         for part in payload["parts"]:
             sub_html, sub_text = _extract_best_body(part)
-            # keep HTML if found
             if sub_html:
                 html_body = (html_body or "") + "\n" + sub_html
-            # only use plain text if we still don't have HTML
             if sub_text and not html_body:
                 text_body = (text_body or "") + "\n" + sub_text
 
@@ -52,7 +49,6 @@ def get_newsletters_df(label_name="Newsletters", days=7):
     """
     service = get_gmail_service()
 
-    # Gmail search query: label + date range
     after_date = (datetime.now() - timedelta(days=days)).strftime("%Y/%m/%d")
     query = f'label:"{label_name}" after:{after_date}'
 
@@ -80,7 +76,6 @@ def get_newsletters_df(label_name="Newsletters", days=7):
         headers = payload.get("headers", [])
         sender_raw = next((h["value"] for h in headers if h["name"] == "From"), "")
         
-        # extract clean email address (ignore display name)
         sender_email = sender_raw.lower().strip()
         if "<" in sender_email and ">" in sender_email:
             sender_email = sender_email.split("<")[1].split(">")[0].strip()
@@ -88,7 +83,6 @@ def get_newsletters_df(label_name="Newsletters", days=7):
         if sender_email not in allowed_senders:
             continue
 
-        # parse date
         date_str = next((h["value"] for h in headers if h["name"] == "Date"), None)
         try:
             date_obj = datetime.fromtimestamp(
@@ -97,7 +91,6 @@ def get_newsletters_df(label_name="Newsletters", days=7):
         except Exception:
             date_obj = None
 
-        # skip if date outside the window (Gmail query isn't perfect)
         if not date_obj or date_obj < datetime.now() - timedelta(days=days):
             continue
 
@@ -114,14 +107,10 @@ def get_newsletters_df(label_name="Newsletters", days=7):
     return pd.DataFrame(email_records)
 
 
-# ==============
-# TLDR Scraper ||
-# ==============
-
+# TLDR Scraper
 def extract_news_from_TLDR(email_row):
     """
-    Extracts structured news items (id, title, text, date)
-    from a newsletter's HTML content.
+    Extracts structured news items (id, title, text, date) from a TLDR newsletter's HTML content.
     """
     email_id = email_row["email_id"]
     date = email_row["date"]
@@ -130,13 +119,10 @@ def extract_news_from_TLDR(email_row):
     soup = BeautifulSoup(html, "html.parser")
     news_items = []
 
-    # TLDR and similar newsletters often use <div class="text-block"> for each story
     for block in soup.find_all("div", class_="text-block"):
-        # Title: usually in <strong>
         title_tag = block.find("strong")
         title = title_tag.get_text(" ", strip=True) if title_tag else None
 
-        # Text: collect all text spans after the title
         body_parts = []
         for span in block.find_all("span"):
             text = span.get_text(" ", strip=True)
@@ -153,7 +139,7 @@ def extract_news_from_TLDR(email_row):
                 "date": date
             })
 
-    # Fallback: if no 'text-block' divs were found, use your old generic method
+    # Fallback: if no text-block divs were found
     if not news_items:
         for header in soup.find_all(["h2", "h3", "strong"]):
             title = header.get_text(strip=True)
@@ -178,7 +164,9 @@ def extract_news_from_TLDR(email_row):
 
 
 def cleaning_TLDR_results(news_items):
-    # Removing sponsored content and cleaning the reading times from titles and text
+    '''
+    Removing sponsored content and cleaning the reading times from titles and text
+    '''
     cleaned_items = []
     for item in news_items:
         title = item['title']
@@ -199,26 +187,18 @@ def cleaning_TLDR_results(news_items):
 
 
 def final_TLDR_extraction(email_row):
+    '''
+    Ensambles the whole TLDR extraction process
+    '''
     raw_items = extract_news_from_TLDR(email_row)
     cleaned_items = cleaning_TLDR_results(raw_items)
     return cleaned_items
 
 
-
-# =====================
-# MorningBrew Scraper ||
-# =====================
-
+# MorningBrew Scraper
 def extract_news_from_MorningBrew(email_row):
     """
-    Extracts structured news items (id, section, title, text, date)
-    from a Morning Brew newsletter's HTML content.
-
-    Handels:
-    - Market section
-    - Standard news (removing image credits and sponsored sections)
-    - Tour de headlines section
-    - Whats else is brewing section
+    Extracts structured news items (id, title, text, date) from a MorningBrew newsletter's HTML content.
     """
     email_id = email_row["email_id"]
     date = email_row["date"]
@@ -229,7 +209,7 @@ def extract_news_from_MorningBrew(email_row):
 
     story_tables = soup.find_all("table", class_="story-content-container")
 
-    # MARKETS (unchanged)
+    # Markets section
     markets_text = None
     for li in soup.find_all("li"):
         strong = li.find("strong")
@@ -258,7 +238,7 @@ def extract_news_from_MorningBrew(email_row):
         title_tag = story.find("h1", class_="story-title")
         title = title_tag.get_text(strip=True) if title_tag else None
 
-        # Tour de headlines (unchanged)
+        # Tour de headlines section
         if section and section.lower() == "world" and title and "tour de" in title.lower():
             content_td = story.find("td", class_="content-container")
             if not content_td:
@@ -283,21 +263,19 @@ def extract_news_from_MorningBrew(email_row):
                     })
             continue
 
-        # STANDARD NEWS: include headers (h2/h3) as content elements
+        # Standard news
         body_parts = []
         content_td = story.find("td", class_="story-content")
         if content_td:
-            # target headings too — many bolded subtitles are <h2>/<h3>
             for element in content_td.find_all(["h2", "h3", "p", "li"], recursive=True):
-                # remove embedded images and nodes that often contain credits
+                # remove embedded images and nodes that contain credits
                 for img in element.find_all("img"):
                     img.decompose()
                 for cap in element.find_all(["figcaption", "small", "footer"]):
                     cap.decompose()
 
-                # skip obvious credit lines by class or by regex
                 el_classes = element.get("class") or []
-                # skips sponsored sections
+                # skip sponsored sections
                 if "source" in el_classes or "sponsored-header-image" in el_classes:
                     continue
                 
@@ -313,31 +291,27 @@ def extract_news_from_MorningBrew(email_row):
                 if not text:
                     continue
 
-                # If this is a heading, preserve it as a subtitle line
                 if element.name in ("h2", "h3"):
                     body_parts.append(text)
                     continue
 
-                # For paragraphs/lists: preserve a leading bolded phrase if present
                 lead_tag = element.find(["strong", "b"])
                 lead_text = None
                 if lead_tag:
                     lead_text = lead_tag.get_text(" ", strip=True)
                     lead_tag.extract()
 
-                # re-fetch text after lead extraction to avoid duplication
                 text = element.get_text(" ", strip=True)
 
                 if lead_text:
                     text = f"{lead_text} — {text}" if text else lead_text
 
-                # preserve list bullets
                 if element.name == "li":
                     body_parts.append(f"• {text}")
                 else:
                     body_parts.append(text)
 
-        # WHAT ELSE IS BREWING (unchanged, but using improved credit skipping)
+        # What else is brewing section
         content_td_alt = story.find("td", class_="content-container")
         if title and "what else is brewing" in (title.lower() if title else "") and content_td_alt:
             for li in content_td_alt.find_all("li"):
@@ -356,7 +330,6 @@ def extract_news_from_MorningBrew(email_row):
                     })
             continue
 
-        # Combine pieces, join with space and keep any heading/subtitle lines
         body = " ".join([bp for bp in body_parts if bp]).strip()
 
         if title and body:
@@ -372,7 +345,9 @@ def extract_news_from_MorningBrew(email_row):
 
 
 def cleaning_MorningBrew_results(news_items):
-    # Removes the columns "Section" from all the news items
+    '''
+    Removes the columns "Section" from all the news items
+    '''
     cleaned_items = []
     for item in news_items:
         cleaned_items.append({
@@ -386,28 +361,26 @@ def cleaning_MorningBrew_results(news_items):
 
 
 def final_MorningBrew_extraction(email_row):
+    '''
+    Ensambles the whole MorningBrew extraction process
+    '''
     raw_items = extract_news_from_MorningBrew(email_row)
     cleaned_items = cleaning_MorningBrew_results(raw_items)
     return cleaned_items
 
 
-# =========================
-# StartupPortugal Scraper ||
-# =========================
-
+# StartupPortugal Scraper
 def extract_news_from_StartupPortugal(email_row):
     """
-    Extract ONLY 'Ecosystem Stream' news.
-    Returns rows: {"id", "title", "text", "date"}.
-    Stops when 'Shameless Self Promotion' appears.
-    Appends 'read more' links directly into the text body.
+    Extracts structured news items (id, title, text, date) from a StartupPortugal newsletter's HTML content.
+    Extracts only 'Ecosystem Stream' news, stops when 'Shameless Self Promotion' appears and appends 'read more' links directly into the text body.
     """
 
     soup = BeautifulSoup(email_row["body"], "html.parser")
     email_id, date = email_row["email_id"], email_row["date"]
     news_items = []
 
-    # find start of the 'Ecosystem Stream' section
+    # Find start of the 'Ecosystem Stream' section
     header = soup.find(lambda t: t.name in ("span", "strong", "p")
                        and "ecosystem stream" in t.get_text(strip=True).lower())
     section_table = header.find_parent("table") if header else None
@@ -428,7 +401,6 @@ def extract_news_from_StartupPortugal(email_row):
             if not text or len(text.split()) < 5:
                 continue
 
-            # --- Extract "read more"-style link ---
             read_more = None
             for a in td.find_all("a", href=True):
                 if any(k in a.get_text(" ", strip=True).lower() for k in ["read", "more", "here", "learn", "apply"]):
@@ -468,7 +440,9 @@ def extract_news_from_StartupPortugal(email_row):
 
 
 def cleaning_StartupPortugal_results(news_items):
-    # Removing duplicated titles
+    '''
+    Removes duplicated titles from the extracted news items
+    '''
     cleaned_items = []
     seen_titles = set()
     for item in news_items:
@@ -487,6 +461,9 @@ def cleaning_StartupPortugal_results(news_items):
 
 
 def final_StartupPortugal_extraction(email_row):
+    '''
+    Ensambles the whole StartupPortugal extraction process
+    '''
     raw_items = extract_news_from_StartupPortugal(email_row)
     cleaned_items = cleaning_StartupPortugal_results(raw_items)
     return cleaned_items
