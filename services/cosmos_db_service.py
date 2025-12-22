@@ -152,7 +152,8 @@ class CosmosDBService:
             meta = item.get('metadata', {})
             art_id = meta.get('article_id')
             is_title = meta.get('is_title')
-            
+            date = meta.get('date')
+
             if not art_id: 
                 continue
 
@@ -183,7 +184,7 @@ class CosmosDBService:
             title = parts["title"] if parts["title"] else "Title not found"
             body = parts["body"] if parts["body"] else ""
             
-            entry = f"ARTICLE {i}:\n{title}\n{body}\n"
+            entry = f"ARTICLE {i} ({date}):\n{title}\n{body}\n"
             formatted_context.append(entry)
 
         return "\n".join(formatted_context)
@@ -249,7 +250,7 @@ class CosmosDBService:
 
         else:
             context = self.build_full_context(results)
-
+            print(context)
         return context
 
 

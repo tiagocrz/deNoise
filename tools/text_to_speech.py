@@ -2,6 +2,7 @@ import base64
 import os
 from langfuse import observe
 from elevenlabs.client import ElevenLabs
+from app_settings import ELEVENLABS_API_KEY
 
 @observe(as_type="tool")
 def convert_script_to_audio(script: str) -> str:
@@ -15,7 +16,7 @@ def convert_script_to_audio(script: str) -> str:
     Returns:
         str: A Data URI string (data:audio/mpeg;base64,...) ready for the frontend.
     """
-    elevenlabs = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+    elevenlabs = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
     # 1. Request Audio Stream from ElevenLabs
     # This returns a generator yielding chunks of bytes
