@@ -112,9 +112,15 @@ In the implementation, the current date corresponds to 2025/12/22 (date of final
 - **Langfuse Integration**: LLM performance tracking and token usage monitoring
 - **Health Check Endpoints**: Monitor API availability and status
 
-### Important Note
+---
+
+## Small & Cool details
 
 - **All features** work whether the user is logged in or not; However we encourage users to create an account to take advantage of the personalization settings! 
+- The user has the ability to export both reports and podcasts
+- The frontend is ready to display outputs in markdown format
+- If the user tries to sign in without singing up first, the platform will not let them sign in and the user will be prompted to create an account
+- When the user defines a display name in the "My Profile" page, the conversational agent will address them accordingly
 
 ---
 
