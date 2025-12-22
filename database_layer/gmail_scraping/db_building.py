@@ -29,7 +29,7 @@ def build_news_database(df_newsletters):
     return news_df
 
 
-def main():
+def scrape_gmail():
     """
     Main function to execute the database building process.
     1. Fetches raw newsletter data.
@@ -53,10 +53,11 @@ def main():
     news_database = build_news_database(df_newsletters)
 
     # ALTERAR PARA METER DIRETAMENTE NA BASE DE DADOS
-    news_database.to_csv(OUTPUT_PATH, index=False)
+    #news_database.to_csv(OUTPUT_PATH, index=False)
     print("SCRAPPING FINISHED")
+    return news_database.to_dict(orient="records")
 
 
 
 if __name__ == "__main__":
-    main()
+    scrape_gmail()

@@ -65,10 +65,12 @@ COSMOSDB_VECTOR_SEARCH_FIELDS = {
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
 LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY")
 LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY")
 LANGFUSE_HOST = os.getenv("LANGFUSE_HOST")
+
 
 def connect_to_cosmosdb():
     client = CosmosClient(url=AZURE_URL, credential=AZURE_PRIMARY_KEY)

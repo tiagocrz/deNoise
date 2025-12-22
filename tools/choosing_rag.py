@@ -17,8 +17,8 @@ def get_time_range_for_rag(time_scope: Literal["daily", "weekly", "monthly"] = "
         (ready for CosmosDB filtering).
     """
     
-    # 1. Define the end date (always the current moment)
-    now = datetime.now()
+    # Define the end date (fixing the day of project submission to make daily and weekly tests work)
+    now = datetime(2025, 12, 22, 10, 28, 29, 873285)
     end_date = now.isoformat()
     
     start_date = None

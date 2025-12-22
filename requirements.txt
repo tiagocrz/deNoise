@@ -13,6 +13,7 @@ google-auth==2.41.1
 lxml==6.0.2
 elevenlabs==2.26.1
 tavily-python==0.7.15
+htmldate==1.9.4
 
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
