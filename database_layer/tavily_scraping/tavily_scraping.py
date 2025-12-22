@@ -23,19 +23,12 @@ domains_to_check = [
 
 
 def extract_date(url, text_content=None):
-    """
+    '''
     Tries to find the publication date using htmldate, using one of the following:
-    1. Checks the URL patterns (fastest).
-    2. Fetches metadata from the URL (most accurate).
+    1. Checks the URL patterns.
+    2. Fetches metadata from the URL.
     3. Returns today's date if all else fails.
-
-    Args:
-        url: The URL of the article.
-        text_content (optional): The raw HTML content of the article. Default == None.
-    
-    Returns:
-        str: The extracted date in 'YYYY-MM-DD' format or today's date as fallback.
-    """
+    '''
     try:
         found_date = find_date(url, outputformat='%Y-%m-%d')
         if found_date:
@@ -46,14 +39,11 @@ def extract_date(url, text_content=None):
 
     return datetime.now().strftime("%Y-%m-%d")
 
+
 def get_news_with_dates():
     """
-    Fetches the latest entrepreneurship and startup funding news articles from Tavily,
+    Fetches the latest entrepreneurship and startup funding news articles from Tavily, 
     extracts their publication dates, and prepares them for database insertion.
-
-    Returns:
-        all_articles: A list of dictionaries, where each dictionary contains the
-        'id', 'title', 'text', and 'date' of an article.
     """
     all_articles = []
 

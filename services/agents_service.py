@@ -14,45 +14,44 @@ from tools.choosing_rag import rag_trigger
 from tools.text_to_speech import convert_script_to_audio
 
 class AgentsService:
-    """
-    The main service layer that orchestrates the three agents.
-    """
+    '''
+    The main service layer that orchestrates the three agents:
+    1. Conversational Agent
+    2. Report Generator
+    3. Podcast Generator
+    '''
 
     def __init__(self, model: str = "gemini-2.5-flash"):
-        # 1. Initialize Core Dependencies
         self.gemini_client = genai.Client(api_key=GEMINI_API_KEY)
         self.model = model
         self.prompts = PromptLoader()
         self.sessions = {}
-
-        # 2. Initialize Service Dependencies
         self.cosmos_db_service = CosmosDBService()
         
-    # ========================================================================
-    # 1. CONVERSATIONAL AGENT (Chat Page)
-    #    Strategy: Agentic RAG (Automatic Function Calling)
-    # ========================================================================
-
+    
+    # 1. Conversational Agent
     @observe(as_type="agent")
     def generate_chat_answer(self, prompt: str, user_id: str) -> str:
-        """
-        Generates a chat response while maintaining the session context.
-        """
-        # 1. Initialize History for User if not exists
+        '''
+        Generates a chat response based on:
+        - The tool chosen by the LLM (rag_trigger or scrape_url_realtime);
+        - The full chat history for context;
+        - The user's custom system instructions and display name from the database.
+        - The system instructions template for the conversational agent.
+        '''
+        # Initialize history for user if not existing
         if user_id not in self.sessions:
             self.sessions[user_id] = []
         
-        # 2. Define the Toolkit
+        # Available tools
         agent_tools = [rag_trigger, scrape_url_realtime]
 
-        # For non-logged in user we skip the DB query
+        # For non-logged in ("anonymous") users we skip the DB query, for the others we fetch the user data
         if user_id and user_id != "anonymous":
             user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
         else:
-        # Skip DB entirely for anonymous users
             user_profile = None
 
-        # 3. Prepare System Instructions (User Profile)
         if user_profile:
             custom_instructions = user_profile["system_instructions"]
             display_name = user_profile["display_name"]
@@ -61,7 +60,7 @@ class AgentsService:
             custom_instructions = ""
             display_name = ""
 
-        # Format the base system instruction
+        # Joining all instructions
         base_system_instruction = self.prompts.format(
             "conversational_agent_system", 
             custom_instructions=custom_instructions
@@ -71,18 +70,15 @@ class AgentsService:
             full_system_instruction = f"{base_system_instruction}\n\nThe user's name is {display_name}. Address them by name when appropriate."
         else:
             full_system_instruction = base_system_instruction
-        
-        # 4. Add the NEW User Message to History
-        # We create a structured 'Content' object for the user's prompt
+
+        # Add user new message to history
         user_message = types.Content(
             role="user",
             parts=[types.Part(text=prompt)]
         )
         self.sessions[user_id].append(user_message)
 
-        # 5. Call Gemini with FULL HISTORY
-        # We pass the entire list of previous messages (self.sessions[user_id])
-        # Gemini will see the whole conversation context.
+        # Buil answer with tool usage, history and system instructions
         response = self.gemini_client.models.generate_content(
             model=self.model,
             contents=self.sessions[user_id],
@@ -98,11 +94,9 @@ class AgentsService:
             )
         )
 
-        # 6. Extract Answer & Update History
-        # The 'response.text' is the final natural language answer (after any tool usage)
         model_answer_text = response.text
         
-        # Create a structured 'Content' object for the model's answer
+        # Add LLM answer to history
         model_message = types.Content(
             role="model",
             parts=[types.Part(text=model_answer_text)]
@@ -113,10 +107,10 @@ class AgentsService:
     
 
     def clear_session_memory(self, user_id: str):
-        """
+        '''
         Clears the chat history for a specific user.
-        Call this when the user clicks 'Clear Chat' or logs out.s
-        """
+        Call this when the user clicks 'Clear Chat', logs out or refreshes the page
+        '''
         if user_id in self.sessions:
             del self.sessions[user_id]
             print(f"Memory cleared for user: {user_id}")
@@ -124,28 +118,22 @@ class AgentsService:
     
 
 
-    # ========================================================================
-    # 2. REPORT GENERATOR (Report Page)
-    #    Strategy: Deterministic RAG (Manual Tool Call)
-    # ========================================================================
-
+    # 2. Report Generator
     @observe(as_type="agent")
     def generate_report(self, topics: str, time_range: str, structure: str, user_id: str) -> str:
-        """
-        Generates a structured report. 
-        We explicitly call the 'rag_trigger' tool to ensure
-        the report is grounded in the exact data requested.
-        """
-        # 1. Retrieve Context (Manual Tool Execution)
-        # We reuse the same tool logic, but we force it to run now.
+        '''
+        Generates a report based on:
+        - Retrieved context from rag_trigger;
+        - The user's custom system instructions from the database.
+        - The report structure desired by the user.
+        - The system instructions template for the report agent.
+        '''
+        # Retrieve context
         context = rag_trigger(query=topics, time_scope=time_range)
 
-        # 2. System Instructions
-        # For non-logged in user we skip the DB query
         if user_id and user_id != "anonymous":
             user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
         else:
-        # Skip DB entirely for anonymous users
             user_profile = None
 
         if user_profile:
@@ -159,7 +147,7 @@ class AgentsService:
             custom_instructions=custom_instructions
         )
         
-        # 3. Call Gemini (Context injected into prompt)
+        # Build full contents
         full_contents = [
             f"Topic: {topics}",
             f"\n\n--- RAG CONTEXT ---\n{context}"
@@ -176,23 +164,21 @@ class AgentsService:
         
         return response.text
 
-    # ========================================================================
-    # 3. PODCAST GENERATOR (Podcast Page)
-    #    Strategy: Deterministic RAG (Manual Tool Call) + TTS
-    # ========================================================================
-
+    # 3. Podcast Generator
     @observe(as_type="agent")
     def generate_podcast(self, topics: str, time_range: str, structure: str, user_id: str) -> str:
         """
-        Generates a podcast audio file.
-        Step 1: Retrieve Data (Manual Tool Call).
-        Step 2: Generate Script (LLM).
-        Step 3: Generate Audio (TTS Tool).
+        Generates a podcast script based on:
+        - Retrieved context from rag_trigger;
+        - The user's custom system instructions from the database.
+        - The podcast structure desired by the user.
+        - The system instructions template for the podcast agent.
+
+        Then uses the ElevenLabs tool to convert the script to audio and returns a Data URI.
         """
-        # 1. Retrieve Context (Manual Tool Execution)
+        # Retrieve context
         context = rag_trigger(query=topics, time_scope=time_range)
         
-        # 2. Generate Script
         if user_id and user_id != "anonymous":
             user_profile = self.cosmos_db_service.retrieve_user_instructions(user_id)
         else:
@@ -214,6 +200,7 @@ class AgentsService:
             f"\n\n--- RAG CONTEXT ---\n{context}"
         ]
 
+        # Build podcast script
         script_response = self.gemini_client.models.generate_content(
             model=self.model,
             contents=full_contents,
@@ -224,5 +211,5 @@ class AgentsService:
         )
         podcast_script = script_response.text
 
-        # 3. Convert Script to Audio (ElevenLabs Tool)
+        # Convert script to audio
         return convert_script_to_audio(podcast_script)

@@ -34,7 +34,8 @@ def scrape_gmail():
     Main function to execute the database building process.
     1. Fetches raw newsletter data.
     2. Processes the raw data into a structured news database.
-    3. Prints a summary of the result.
+    3. Scrapes each newsletter using the appropriate extractor.
+    4. Returns the final news database as a list of records (dictionaries).
     """
 
     OUTPUT_PATH = Path(__file__).resolve().parent / "news_database.csv"
