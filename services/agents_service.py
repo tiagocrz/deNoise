@@ -138,7 +138,7 @@ class AgentsService:
         # 1. Retrieve Context (Manual Tool Execution)
         # We reuse the same tool logic, but we force it to run now.
         context = rag_trigger(query=topics, time_scope=time_range)
-        print("RAG CONTEXT:", context)
+        #print("RAG CONTEXT:", context)
 
         # 2. System Instructions
         # For non-logged in user we skip the DB query
@@ -162,7 +162,7 @@ class AgentsService:
         # 3. Call Gemini (Context injected into prompt)
         full_contents = [
             f"Topic: {topics}",
-            f"\n\n--- NEWS (Source: Internal DB) ---\n{context}"
+            f"\n\n--- RAG CONTEXT ---\n{context}"
         ]
 
         response = self.gemini_client.models.generate_content(
@@ -211,7 +211,7 @@ class AgentsService:
 
         full_contents = [
             f"Topic: {topics}",
-            f"\n\n--- PODCAST SOURCE MATERIAL ---\n{context}"
+            f"\n\n--- RAG CONTEXT ---\n{context}"
         ]
 
         script_response = self.gemini_client.models.generate_content(
@@ -225,4 +225,5 @@ class AgentsService:
         podcast_script = script_response.text
 
         # 3. Convert Script to Audio (ElevenLabs Tool)
-        return convert_script_to_audio(podcast_script)
+        #return convert_script_to_audio(podcast_script)
+        return podcast_script

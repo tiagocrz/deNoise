@@ -59,7 +59,7 @@ class ClearSessionRequest(BaseModel):
 class ReportRequest(BaseModel):
     topics: str = Field(..., description="Topics to generate report on")
     time_range: str = Field(..., description="Time range for news articles (e.g., 'weekly', 'monthly')")
-    structure: str = Field(default="Introduction, Extensive Summary, Wrap up", description="Report structure type")
+    structure: str = Field(..., description="Report structure type")
     user_id: str = Field(..., description="User identifier")
 
 class ReportResponse(BaseModel):
@@ -69,7 +69,7 @@ class ReportResponse(BaseModel):
 class PodcastRequest(BaseModel):
     topics: str = Field(..., description="Topics for podcast content")
     time_range: str = Field(..., description="Time range for news articles")
-    structure: str = Field(default="interview_style", description="Podcast structure/style")
+    structure: str = Field(..., description="Podcast structure/style")
     user_id: str = Field(..., description="User identifier")
 
 class PodcastResponse(BaseModel):

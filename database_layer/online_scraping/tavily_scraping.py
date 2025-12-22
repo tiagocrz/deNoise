@@ -46,96 +46,6 @@ def extract_date(url, text_content=None):
 
     return datetime.now().strftime("%Y-%m-%d")
 
-
-# Aggressive text cleaning function (NOT USED)
-def aggressive_clean(text):
-    lines = text.split('\n')
-    cleaned_lines = []
-    seen_lines = set()
-
-    # 1. AGGRESSIVE PATTERNS TO REMOVE
-    # If a line contains ANY of these, it is deleted instantly.
-    # We target GDPR, Cookies, Login, UI elements, and specific platform noise.
-    garbage_triggers = [
-        "login", "register", "sign in", "sign up", "subscribe", "subscrição",
-        "cookie", "consent", "parceiros", "armazenamento", "device", "browser",
-        "privacy policy", "terms of use", "termos e condições", "política de privacidade",
-        "all rights reserved", "copyright", "powered by", "mybusiness.com",
-        "share on", "compartilhar", "tweet", "follow us", "siga-nos",
-        "no information for this section", "our apologies",
-        "skip to content", "saltar os links", "outdated browser",
-        "funcional", "estatísticas", "marketing", "preferências", # Cookie banner categories
-        "ver mais", "saiba mais", "ler mais", "read more",
-        "edit with live css", "write css",
-        "image", "video", "shutterstock", "freepik", # Image captions often leak
-        "whatsapp://", "facebook.com", "twitter.com", "linkedin.com"
-    ]
-
-    # 2. PATTERNS TO KEEP (Whitelist)
-    # If a line matches these headers, we force keep it (unless it's garbage)
-    header_indicators = ["===", "---"]
-
-    for line in lines:
-        original_line = line
-        line = line.strip()
-
-        # --- FILTER 1: Empty & Structure ---
-        if not line:
-            continue
-        
-        # Keep Markdown Headers (=== or ---)
-        if any(x in line for x in header_indicators):
-            cleaned_lines.append(line)
-            continue
-
-        # --- FILTER 2: Remove Markdown Images & Icons ---
-        # Remove ![Alt](URL) completely
-        line = re.sub(r'!\[.*?\]\(.*?\)', '', line)
-        # Remove standalone image links often found in these scrapes
-        if line.startswith("[![Image"):
-            continue
-
-        # --- FILTER 3: The "Garbage Word" Check ---
-        line_lower = line.lower()
-        if any(trigger in line_lower for trigger in garbage_triggers):
-            continue
-
-        # --- FILTER 4: The "Link" Analysis ---
-        # We need to distinguish between a Navigation Link (Bad) and a Resource/Article Link (Good).
-        
-        # Check if line is PURELY a markdown link: [Text](URL)
-        link_match = re.match(r'^\[(.*?)\]\(.*?\)$', line)
-        
-        if link_match:
-            link_text = link_match.group(1)
-            # LOGIC: 
-            # If the link text is short (< 25 chars) and doesn't look like a book/resource title, kill it.
-            # Navigation links are usually "Home", "News", "Economia" (Short).
-            # Content links are "The Lean Startup", "Sonae investe seis milhões..." (Longer).
-            if len(link_text) < 25:
-                continue 
-            
-            # Additional check: If it looks like a date or author inside a link, kill it.
-            if re.match(r'^\d', link_text) or "author" in original_line:
-                continue
-
-        # --- FILTER 5: Short Line Noise ---
-        # If a line is very short, not a list item (*), and has no punctuation, it's likely UI noise.
-        # e.g. "Lisboa", "Domingo", "10.5 C"
-        if len(line) < 20 and not line.startswith("*") and not line.endswith(('.', ':', '?', '!')):
-            continue
-
-        # --- FILTER 6: Deduplication ---
-        # Scrapes often repeat the Title 3 times.
-        if line in seen_lines:
-            continue
-        
-        seen_lines.add(line)
-        cleaned_lines.append(line)
-
-    return "\n".join(cleaned_lines)
-
-
 def get_news_with_dates():
     """
     Fetches the latest entrepreneurship and startup funding news articles from Tavily,
@@ -193,6 +103,3 @@ def get_news_with_dates():
             print(f"Failed to fetch from {url}: {e}")
 
     return all_articles
-
-
-

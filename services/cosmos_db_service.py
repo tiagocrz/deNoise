@@ -29,13 +29,20 @@ class CosmosDBService:
 
 
 
-    def insert_articles(self, container_name, articles: pd.DataFrame):
+    def insert_articles(self, container_name, articles: list[dict]) -> None:
         """
         Simple bulk insert of objects in either non-vector containers.
         """
         container = self.database.get_container_client(container_name)
-        for article in articles.to_dict(orient='records'):
-            container.upsert_item(article)
+        for article in articles:
+            clean_article = {}
+            for k, v in article.items():
+                if isinstance(v, pd.Timestamp):
+                    clean_article[k] = v.isoformat().split('T')[0]
+                else:
+                    clean_article[k] = v
+
+            container.upsert_item(clean_article)
 
 
 
@@ -62,7 +69,7 @@ class CosmosDBService:
                     metadata={
                         "title": article_title,
                         "article_id": str(article_id),
-                        "date": article_date.split(' ')[0], # Only keep the actual date, not the time
+                        "date": article_date,
                         "is_title": True if content == article_title else False
                     }
                 )

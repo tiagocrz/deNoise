@@ -1,4 +1,4 @@
-from gmail_auth import get_gmail_service
+from .gmail_auth import get_gmail_service
 import pandas as pd
 from bs4 import BeautifulSoup
 from base64 import urlsafe_b64decode

@@ -62,13 +62,13 @@ if __name__ == "__main__":
 
     
     # Fetch Tavily news 
-    tavily_news = get_news_with_dates()
-    print(f"Fetched {len(tavily_news)} news articles from Tavily.")
+    #tavily_news = get_news_with_dates()
+    #print(f"Fetched {len(tavily_news)} news articles from Tavily.")
 
 
     # Insert news articles into CosmosDB
     cosmosdb_service.insert_articles("newsArticles", gmail_news)
-    cosmosdb_service.insert_articles("newsArticles", tavily_news)
+    #cosmosdb_service.insert_articles("newsArticles", tavily_news)
 
 
     # Create embeddings and index them 

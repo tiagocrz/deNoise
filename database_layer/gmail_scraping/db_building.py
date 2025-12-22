@@ -1,5 +1,5 @@
+from .scrapers import get_newsletters_df, final_TLDR_extraction, final_MorningBrew_extraction, final_StartupPortugal_extraction
 import pandas as pd
-from scrapers import get_newsletters_df, final_TLDR_extraction, final_MorningBrew_extraction, final_StartupPortugal_extraction
 from pathlib import Path
 
 def build_news_database(df_newsletters):
