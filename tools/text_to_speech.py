@@ -21,7 +21,7 @@ def convert_script_to_audio(script: str) -> str:
     # This returns a generator yielding chunks of bytes
     audio_generator = elevenlabs.text_to_speech.convert(
         text=script,
-        voice_id="JBFqnCBsd6RMkjVDRZzb",
+        voice_id="q0IMILNRPxOgtBTS4taI",
         model_id="eleven_multilingual_v2",
         output_format="mp3_44100_128",
     )
