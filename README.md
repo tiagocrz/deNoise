@@ -26,8 +26,12 @@
 2. **Automated Report Generation** - Create structured, topic-focused news summaries
 3. **AI-Powered Podcast Creation** - Convert news content into engaging audio formats
 
+
+**Important Notes**
 The platform can automatically scrape and process news from email newsletters, store them with semantic embeddings in a vector database, and provide intelligent retrieval.
 In the implementation, the current date corresponds to 2025/12/22 (date of final scraping), to make daily, weekly and monthly time windows work; however, the scraping could be performed at any time. This was a deliberate choice to keep the setup unchanged until the project defence day.
+
+The Render free tier has limitations such as service hibernation after 15 minutes of inactivity, causing slower startup times (up to 50 seconds) when the service needs to be reinitialized, which may take so long that the app doesn’t respond at all; in such cases, the user just needs to refresh the page and try again.
 
 ---
 
