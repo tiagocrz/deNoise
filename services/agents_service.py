@@ -138,7 +138,6 @@ class AgentsService:
         # 1. Retrieve Context (Manual Tool Execution)
         # We reuse the same tool logic, but we force it to run now.
         context = rag_trigger(query=topics, time_scope=time_range)
-        #print("RAG CONTEXT:", context)
 
         # 2. System Instructions
         # For non-logged in user we skip the DB query
